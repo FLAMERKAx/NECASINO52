@@ -1,6 +1,5 @@
 import random
 import sys
-
 import pygame
 
 # Инициализация Pygame
@@ -23,6 +22,47 @@ MAX_COEFF = 2.95
 
 GRAVITY = 0.5
 screen_rect = pygame.Rect(-50, -50, WIDTH + 50, HEIGHT + 50)
+
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+# Функция для загрузки изображения
+def load_image(filename):
+    try:
+        image = pygame.image.load(filename)
+        return image.convert_alpha()
+    except pygame.error as e:
+        print(f"Unable to load image: {filename}")
+        raise SystemExit(e)
+
+
+# Создаем группу спрайтов
+all_sprites = pygame.sprite.Group()
+
+class AnimatedSprite(pygame.sprite.Sprite):
+    def __init__(self, sheet, columns, rows, x, y):
+        super().__init__(all_sprites)
+        self.frames = []
+        self.cut_sheet(sheet, columns, rows)
+        self.cur_frame = 0
+        self.image = self.frames[self.cur_frame]
+        self.rect = self.rect.move(x, y)
+
+    def cut_sheet(self, sheet, columns, rows):
+        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
+                                sheet.get_height() // rows)
+        for j in range(rows):
+            for i in range(columns):
+                frame_location = (self.rect.w * i, self.rect.h * j)
+                self.frames.append(sheet.subsurface(pygame.Rect(
+                    frame_location, self.rect.size)))
+
+    def update(self):
+        self.cur_frame = (self.cur_frame + 1) % len(self.frames)
+        self.image = self.frames[self.cur_frame]
+
+
+# Создаем спрайт дракона
+dragon = AnimatedSprite(load_image("coin_sheet5x4v2.png"), 5, 4, 317, 233)
+
 
 
 class Particle(pygame.sprite.Sprite):
@@ -141,7 +181,6 @@ class CoinFlipGame:
                     self.screen.blit(self.heads_img, (100 + i * 60, 50))
                 else:
                     self.screen.blit(self.tails_img, (100 + i * 60, 50))
-                # pygame.draw.circle(self.screen, "red", (100 + i * 60, 50), 20)
 
             # Рисуем монету
             self.screen.blit(self.coin_img, (317, 233))
@@ -191,9 +230,31 @@ class CoinFlipGame:
                                 result = random.choice(['Heads', 'Tails'])
                                 self.history.append(result)
                                 self.play_sound("coin.mp3")
-                                pygame.time.wait(700)
+                                for i in range(56):
+                                    self.screen.blit(self.background_img, (0, 0))
+                                    self.screen.blit(balance_text, (WIDTH - 220, 35))
+                                    self.screen.blit(coeff_text, (WIDTH - 220, 80))
+                                    self.screen.blit(self.playbtn_img, start_btn)
+                                    self.screen.blit(text_surf, (self.input_rect.x + 10, self.input_rect.y + 10))
+                                    self.screen.blit(self.inputbox_img, self.input_rect)
+                                    self.screen.blit(
+                                        self.tailsbtn_img if self.selected_side != 'Tails' else self.tailsbtnsel_img,
+                                        tails_btn)
+                                    self.screen.blit(
+                                        self.headsbtn_img if self.selected_side != 'Heads' else self.headsbtnsel_img,
+                                        heads_btn)
+                                    for i, res in enumerate(self.history[-5:]):
+                                        if res == "Heads":
+                                            self.screen.blit(self.heads_img, (100 + i * 60, 50))
+                                        else:
+                                            self.screen.blit(self.tails_img, (100 + i * 60, 50))
+                                    dragon.update()
+                                    pygame.time.wait(15)
+                                    all_sprites.draw(screen)
+                                    pygame.display.flip()
+                                self.screen.blit(self.coin_img, (317, 233))
                                 self.play_sound("coin_finish.mp3")
-                                pygame.time.wait(300)
+                                pygame.time.wait(600)
                                 if (self.current_bet * self.coeff) < 2000:
                                     if result == self.selected_side:
                                         self.balance += int(self.current_bet * self.coeff)
