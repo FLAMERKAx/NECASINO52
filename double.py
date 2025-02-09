@@ -2,8 +2,9 @@ import pygame
 import sys
 import random
 
+
 # Класс игры
-class DoubleGame:
+class DoubleGame():
     def __init__(self):
         # Инициализация Pygame
         pygame.init()
@@ -38,7 +39,7 @@ class DoubleGame:
         # Переменная для счета кликов
         self.click_count = 0
 
-        self.win = False
+        self.win = None
 
         # Баланс игрока
         self.balance = 500  # Начальный баланс
@@ -181,7 +182,7 @@ class DoubleGame:
                     elif not self.is_spinning and self.check_button_click(mouse_pos, 225, 325):
                         self.clck += 1
                         if not self.is_spinning and self.color_selected is not None:
-                            if self.current_bet <= self.balance and self.current_bet > 0:
+                            if self.balance >= self.current_bet > 0:
                                 self.generate_roulette()  # Генерируем новую рулетку
                                 self.is_spinning = True  # Начинаем вращение
                                 self.offset_x = 0
@@ -190,12 +191,12 @@ class DoubleGame:
                             else:
                                 font = pygame.font.SysFont('Arial', 14)
                                 warning_text = "Ставка должна быть больше нуля и не превышать ваш баланс."
-                                text_surface = font.render(warning_text, True, (255, 0, 0))
-                                self.screen.blit(text_surface, (150, 250))
+                                text_surface = font.render(warning_text, True, 'black')
+                                self.screen.blit(text_surface, (150, 125))
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_BACKSPACE:
                         if len(str(self.current_bet)) > 1:
-                            self.current_bet = int(str(self.current_bet)[:-1])  # Убираем одну единицу
+                            self.current_bet = int(str(self.current_bet)[:-1])
                         else:
                             self.current_bet = 0
                     else:
@@ -217,6 +218,8 @@ class DoubleGame:
                 if self.win:
                     text = font.render("Поздравляю! Вы победили", True, ('green'))
                     self.screen.blit(text, (175, 110))
+                elif self.win == None:
+                    pass
                 else:
                     text = font.render("Поражение, в следующий раз повезет", True, ('red'))
                     self.screen.blit(text, (100, 110))
@@ -243,6 +246,7 @@ class DoubleGame:
 
         pygame.quit()
         sys.exit()
+
 
 if __name__ == "__main__":
     game = DoubleGame()
