@@ -199,19 +199,21 @@ class DoubleGame():
                         else:
                             self.warning_text = "Ставка на цвет не сделана"
                 elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_BACKSPACE:
-                        if len(str(self.current_bet)) > 1:
-                            self.current_bet = int(str(self.current_bet)[:-1])
+                    # Игнорируем ввод ставки во время спина
+                    if not self.is_spinning:
+                        if event.key == pygame.K_BACKSPACE:
+                            if len(str(self.current_bet)) > 1:
+                                self.current_bet = int(str(self.current_bet)[:-1])
+                            else:
+                                self.current_bet = 0
                         else:
-                            self.current_bet = 0
-                    else:
-                        try:
-                            new_char = int(event.unicode)
-                            if new_char >= 0:
-                                self.current_bet *= 10  # Умножаем текущую ставку на 10
-                                self.current_bet += new_char  # Добавляем новую цифру
-                        except ValueError:
-                            pass
+                            try:
+                                new_char = int(event.unicode)
+                                if new_char >= 0:
+                                    self.current_bet *= 10  # Умножаем текущую ставку на 10
+                                    self.current_bet += new_char  # Добавляем новую цифру
+                            except ValueError:
+                                pass
 
             # Ограничиваем частоту кадров
             self.clock.tick(60)
@@ -254,11 +256,11 @@ class DoubleGame():
                     x_cord = 180
                 else:
                     x_cord = 20
-                pygame.draw.rect(self.screen, (101, 53, 155), (1, 75, self.screen.get_width(), 100), 0)
+                pygame.draw.rect(self.screen, (101, 53, 155), (1, 115, self.screen.get_width(), 200), 0)
                 # Если есть предупреждение, отображаем его
                 font = pygame.font.SysFont('Arial', 18, bold=True)
                 text_surface = font.render(self.warning_text, True, 'red')
-                self.screen.blit(text_surface, (x_cord, 125))
+                self.screen.blit(text_surface, (x_cord, 200))
 
             pygame.display.flip()
 
