@@ -1,7 +1,6 @@
 import random
 import sys
 import pygame
-from pygame.examples.music_drop_fade import volume
 
 pygame.init()
 
@@ -91,6 +90,7 @@ class CoinFlipGame:
         self.streak = 0
         self.coeff = BASE_COEFF
         self.current_result = None
+
         self.background_img = pygame.image.load('background.png')
         self.play_sound("background.mp3", loop=True, volume=0.4)
         self.all_sprites = pygame.sprite.Group()
