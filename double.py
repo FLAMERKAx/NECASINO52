@@ -47,6 +47,9 @@ class DoubleGame():
         # Текущая ставка
         self.current_bet = 0
 
+        # Переменная для текста предупреждения
+        self.warning_text = None
+
     # Функция создания массива с 1 и 0 для отображения красных и черных полей
     def generate_roulette(self):
         self.a = random.randint(10, 45)
@@ -97,7 +100,6 @@ class DoubleGame():
 
                 print(int(result_value), int(self.color_selected))
 
-                # Выводим сообщение о результате
             else:
                 self.offset_x -= self.scroll_speed
 
@@ -121,9 +123,9 @@ class DoubleGame():
     def draw_color_buttons(self, name, color, x_cord, y_cord):
         button_rect = pygame.Rect(x_cord, y_cord, 150, 50)
         if self.color_selected == 0 and name == 'Черный X2':
-            button_color = (100, 100, 100)  # Измененный цвет для выбранной черной кнопки
+            button_color = (255, 165, 0)  # Измененный цвет для выбранной черной кнопки
         elif self.color_selected == 1 and name == 'Красный X2':
-            button_color = (180, 0, 0)  # Измененный цвет для выбранной красной кнопки
+            button_color = (255, 165, 0)  # Измененный цвет для выбранной красной кнопки
         else:
             button_color = color  # Обычный цвет кнопки
 
@@ -162,6 +164,10 @@ class DoubleGame():
         bet_text = font.render(str(self.current_bet), True, (0, 0, 0))
         self.screen.blit(bet_text, (input_rect.x + 5, input_rect.y + 8))
         pygame.draw.rect(self.screen, (0, 0, 0), input_rect, 2)
+        font = pygame.font.SysFont('Arial', 24)
+        balance_text = f"Ставка: "
+        text_surface = font.render(balance_text, True, (255, 255, 255))
+        self.screen.blit(text_surface, (250, 30))
 
     # Основной игровой цикл
     def run_game(self):
@@ -181,18 +187,17 @@ class DoubleGame():
                         self.color_selected = 1
                     elif not self.is_spinning and self.check_button_click(mouse_pos, 225, 325):
                         self.clck += 1
-                        if not self.is_spinning and self.color_selected is not None:
+                        self.warning_text = None  # Сбрасываем предупреждение перед проверкой
+                        if self.color_selected is not None:
                             if self.balance >= self.current_bet > 0:
                                 self.generate_roulette()  # Генерируем новую рулетку
                                 self.is_spinning = True  # Начинаем вращение
                                 self.offset_x = 0
                                 self.click_count += 1
-                                # Сбрасываем выбор цвета после нажатия Spin
                             else:
-                                font = pygame.font.SysFont('Arial', 14)
-                                warning_text = "Ставка должна быть больше нуля и не превышать ваш баланс."
-                                text_surface = font.render(warning_text, True, 'black')
-                                self.screen.blit(text_surface, (150, 125))
+                                self.warning_text = "Ставка должна быть больше нуля и не превышать ваш баланс."
+                        else:
+                            self.warning_text = "Ставка на цвет не сделана"
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_BACKSPACE:
                         if len(str(self.current_bet)) > 1:
@@ -213,6 +218,7 @@ class DoubleGame():
             # Очистка экрана перед каждой итерацией игрового цикла
             self.screen.fill(self.bg_color)
 
+            # Отображение сообщений о результате
             font = pygame.font.SysFont('Comic sans', 22, bold=True)
             if self.clck > 0:
                 if self.win:
@@ -235,12 +241,24 @@ class DoubleGame():
             if self.lst:
                 self.draw_roulette()
 
-            self.draw_color_buttons('Черный X2', 'black', 75, 325)
-            self.draw_color_buttons('Красный X2', 'red', 375, 325)
+            self.draw_color_buttons('Черный X2', 'black', 50, 325)
+            self.draw_color_buttons('Красный X2', 'red', 400, 325)
             self.draw_button_spin()
             self.bet_input_field()
             self.display_balance()
-            self.click_count = 0
+
+            # Отображение предупреждения
+            if self.warning_text:
+                x_cord = 0
+                if len(self.warning_text) == 25:
+                    x_cord = 180
+                else:
+                    x_cord = 20
+                pygame.draw.rect(self.screen, (101, 53, 155), (1, 75, self.screen.get_width(), 100), 0)
+                # Если есть предупреждение, отображаем его
+                font = pygame.font.SysFont('Arial', 18, bold=True)
+                text_surface = font.render(self.warning_text, True, 'red')
+                self.screen.blit(text_surface, (x_cord, 125))
 
             pygame.display.flip()
 
