@@ -1,4 +1,5 @@
 import sys
+
 import pygame
 
 pygame.init()
@@ -70,16 +71,12 @@ class CoinFlipGame:
         return sound
 
     def run(self):
-        up = AnimatedSprite(load_image("char_up.png").convert_alpha(), 3, 1, 317, 233)
-        down = AnimatedSprite(load_image("char_down.png").convert_alpha(), 3, 1, 317, 233)
-        left = AnimatedSprite(load_image("char_left.png").convert_alpha(), 3, 1, 317, 233)
-        right = AnimatedSprite(load_image("char_right.png").convert_alpha(), 3, 1, 317, 233)
+
+        char = AnimatedSprite(load_image("char.png").convert_alpha(), 3, 4, 317, 233)
 
         running = True
 
         while running:
-
-
 
             self.screen.blit(self.background_img, (0, 0))
             #
@@ -104,33 +101,45 @@ class CoinFlipGame:
                 #
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_w:
-                        for _ in range(4):
+                        char.cur_frame = 0
+                        for _ in range(2):
+                            print(char.cur_frame)
                             self.screen.blit(self.background_img, (0, 0))
-                            up.update()
                             pygame.time.wait(200)
-                            up.draw(screen)
+                            all_sprites.draw(screen)
                             pygame.display.flip()
-                    elif event.key == pygame.K_s:
-                        for _ in range(4):
+                            char.update()
+                        char.cur_frame = 0
+                    if event.key == pygame.K_d:
+                        char.cur_frame = 3
+                        for _ in range(2):
+                            print(char.cur_frame)
                             self.screen.blit(self.background_img, (0, 0))
-                            down.update()
                             pygame.time.wait(200)
-                            down.draw(screen)
+                            all_sprites.draw(screen)
                             pygame.display.flip()
-                    elif event.key == pygame.K_a:
-                        for _ in range(4):
+                            char.update()
+                        char.cur_frame = 3
+                    if event.key == pygame.K_a:
+                        char.cur_frame = 6
+                        for _ in range(2):
+                            print(char.cur_frame)
                             self.screen.blit(self.background_img, (0, 0))
-                            left.update()
                             pygame.time.wait(200)
-                            left.draw(screen)
+                            all_sprites.draw(screen)
                             pygame.display.flip()
-                    elif event.key == pygame.K_d:
-                        for _ in range(4):
+                            char.update()
+                        char.cur_frame = 6
+                    if event.key == pygame.K_s:
+                        char.cur_frame = 9
+                        for _ in range(2):
+                            print(char.cur_frame)
                             self.screen.blit(self.background_img, (0, 0))
-                            right.update()
                             pygame.time.wait(200)
-                            right.draw(screen)
+                            all_sprites.draw(screen)
                             pygame.display.flip()
+                            char.update()
+                        char.cur_frame = 9
 
             pygame.display.flip()
             self.clock.tick(60)
