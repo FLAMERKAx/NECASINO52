@@ -160,6 +160,7 @@ class Game:
         low_coefficients_count = sum(1 for coeff in self.fixed_coefficients_history if coeff < LOW_COEFFICIENT_THRESHOLD)
         return low_coefficients_count >= MAX_LOW_COEFFICIENTS_ALLOWED
 
+
     def apply_penalty(self):
         # Увеличение продолжительности бана при повторных нарушениях
         if self.ban_start_time > 0:
