@@ -112,12 +112,12 @@ class Game:
                         pass
 
     def bet_input_field(self):
-        input_rect = pygame.Rect(415, 55, 140, 32)
+        input_rect = pygame.Rect(435, 55, 140, 32)
         if self.started:
             pygame.draw.rect(self.screen, (128, 128, 128), input_rect)  # Серый цвет для заблокированного поля
         else:
             pygame.draw.rect(self.screen, (230, 230, 230), input_rect)
-        font = pygame.font.SysFont('Arial', 16)
+        font = pygame.font.SysFont('Comic Sans', 16)
         bet_text = font.render(str(self.bet_amount), True, (0, 0, 0))
         self.screen.blit(bet_text, (input_rect.x + 5, input_rect.y + 8))
         pygame.draw.rect(self.screen, (0, 0, 0), input_rect, 2)
@@ -136,6 +136,7 @@ class Game:
                 500 - 20 <= pos[1] <= 500 + 20
 
     def start_game(self):
+        self.last_win = None
         self.warning_text = None
         self.lose = None
 
@@ -150,7 +151,7 @@ class Game:
         if self.bet_amount <= self.balance and self.bet_amount != 0:
             self.started = True
             self.balance -= self.bet_amount
-            self.crash_time = pygame.time.get_ticks() + random.randint(600, 15000)  # Время краша от 3 до 12 секунд
+            self.crash_time = pygame.time.get_ticks() + random.randint(300, 12000)  # Время краша от 3 до 12 секунд
             self.sonick_rect.x = 0 # Сброс позиции Соника
             self.sonick_rect.centery = HEIGHT - 275 # Сброс позиции Соника
         else:
@@ -196,10 +197,10 @@ class Game:
     def crash(self):
         self.started = False
         self.winnings = 0
-        self.lose = f"You lost! The coefficient was {self.current_coefficient:.2f}"
+        self.lose = f'Поражение! Коэффициент был {self.current_coefficient:.2f}'
         self.current_coefficient = 1
         self.coefficient_growth_rate = 0.001
-        self.sonick_rect.x = 0 # Reset sonick position
+        self.sonick_rect.x = 0
 
     def fix_winnings(self):
         # Проверяем, сколько времени прошло с момента последнего нажатия Cash
@@ -239,7 +240,7 @@ class Game:
             else:
                 self.sonick_rect.x = 325  # Останавливаем Соника
         else:
-            self.sonick_rect.center = (0, HEIGHT - 150) # Reset position
+            self.sonick_rect.center = (0, HEIGHT - 150)
 
     def draw_sonick(self):
         self.screen.blit(self.sonick_images[self.sonick_index], self.sonick_rect)
@@ -252,13 +253,13 @@ class Game:
             self.screen.fill((101, 53, 155))
 
             # Отображение баланса
-            self.draw_text(f"Balance: {self.balance:.2f}", WHITE, WIDTH // 2, 30)
+            self.draw_text(f"Баланс: {self.balance:.2f}", WHITE, WIDTH // 2, 30)
 
             # Отображение текущей ставки
-            self.draw_text(f"Bet Amount: ", WHITE, 335, 70)
+            self.draw_text(f"Текущая ставка: ", WHITE, 335, 70)
 
             # Отображение текущего коэффициента
-            self.draw_text(f"Current Coefficient: {self.current_coefficient:.2f}", YELLOW, WIDTH // 2, 110)
+            self.draw_text(f"Текущий коэффициент: {self.current_coefficient:.2f}", YELLOW, WIDTH // 2, 110)
 
             if self.lose:
                 self.draw_text(self.lose, WHITE, WIDTH // 2, 300)
@@ -273,12 +274,12 @@ class Game:
                 self.draw_sonick() # Draw Sonic during the game
                 button_x = WIDTH // 2
                 button_y = 500
-                button_width = 150
-                button_height = 40
-                pygame.draw.rect(self.screen, BLUE, (
+                button_width = 200
+                button_height = 50
+                pygame.draw.rect(self.screen, (255, 165, 0), (
                     button_x - button_width // 2, button_y - button_height // 2, button_width, button_height))
-                self.draw_text("Cash", WHITE, button_x, button_y)
-                self.draw_text(f"Potential Winnings: {self.potential_winnings:.2f}", WHITE, WIDTH // 2, 150)
+                self.draw_text("Cash", BLACK, button_x, button_y)
+                self.draw_text(f"Возможный выигрыш: {self.potential_winnings:.2f}", WHITE, WIDTH // 2, 150)
             else:
                 button_x = WIDTH // 2
                 button_y = 500
@@ -288,7 +289,8 @@ class Game:
                     button_x - button_width // 2, button_y - button_height // 2, button_width, button_height))
                 self.draw_text("Start", BLACK, button_x, button_y)
 
-
+            if self.last_win:
+                self.draw_text(f'Поздравляю! Ваш выигрыш: {self.last_win:.2f}', WHITE, WIDTH // 2, 450)
 
             if self.warning_text:
                 self.draw_text(self.warning_text, WHITE, WIDTH // 2, 300)
