@@ -1,5 +1,7 @@
 import random
+import sqlite3
 import sys
+
 import pygame
 
 pygame.init()
@@ -8,7 +10,6 @@ WIDTH, HEIGHT = 800, 600
 BLACK = (179, 167, 240)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
-INITIAL_BALANCE = 1000
 BASE_COEFF = 1.75
 MAX_COEFF = 2.95
 
@@ -53,7 +54,7 @@ class AnimatedSprite(pygame.sprite.Sprite):
 class Particle(pygame.sprite.Sprite):
     def __init__(self, groups, pos, dx, dy):
         super().__init__(groups)
-        self.image = pygame.image.load("smallcoin.png")
+        self.image = pygame.image.load(r"coinflip\smallcoin.png")
         self.rect = self.image.get_rect(center=pos)
         self.velocity = [dx, dy]
         self.gravity = GRAVITY
@@ -75,14 +76,15 @@ def create_particles(position, group, particle):
 
 
 class CoinFlipGame:
-    def __init__(self):
+    def __init__(self, money, id):
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         pygame.display.set_caption("CoinFlip")
         self.clock = pygame.time.Clock()
         self.font = pygame.font.Font(None, 36)
         pygame.mixer.init()
 
-        self.balance = INITIAL_BALANCE
+        self.user_id = id
+        self.balance = money
         self.history = []
         self.current_bet = 0
         self.selected_side = None
@@ -91,27 +93,27 @@ class CoinFlipGame:
         self.coeff = BASE_COEFF
         self.current_result = None
 
-        self.background_img = pygame.image.load('background.png')
-        self.play_sound("background.mp3", loop=True, volume=0.4)
+        self.background_img = pygame.image.load(r'coinflip\background.png')
+        self.play_sound(r"coinflip\background.mp3", loop=True, volume=0.4)
         self.all_sprites = pygame.sprite.Group()
 
-        self.coin_img = pygame.image.load('coin.png').convert_alpha()
-        self.coin_heads_img = pygame.image.load("coinHeads.png").convert_alpha()
-        self.coin_tails_img = pygame.image.load("coinTails.png").convert_alpha()
-        self.heads_img = pygame.image.load('heads.png').convert_alpha()
-        self.tails_img = pygame.image.load('tails.png').convert_alpha()
+        self.coin_img = pygame.image.load(r'coinflip\coin.png').convert_alpha()
+        self.coin_heads_img = pygame.image.load(r"coinflip\coinHeads.png").convert_alpha()
+        self.coin_tails_img = pygame.image.load(r"coinflip\coinTails.png").convert_alpha()
+        self.heads_img = pygame.image.load(r'coinflip\heads.png').convert_alpha()
+        self.tails_img = pygame.image.load(r'coinflip\tails.png').convert_alpha()
 
-        self.tailsbtn_img = pygame.image.load('tailsbtn.png').convert_alpha()
-        self.headsbtn_img = pygame.image.load('headsbtn.png').convert_alpha()
+        self.tailsbtn_img = pygame.image.load(r'coinflip\tailsbtn.png').convert_alpha()
+        self.headsbtn_img = pygame.image.load(r'coinflip\headsbtn.png').convert_alpha()
 
-        self.tailsbtnsel_img = pygame.image.load('tailsbtnsel.png').convert_alpha()
-        self.headsbtnsel_img = pygame.image.load('headsbtnsel.png').convert_alpha()
+        self.tailsbtnsel_img = pygame.image.load(r'coinflip\tailsbtnsel.png').convert_alpha()
+        self.headsbtnsel_img = pygame.image.load(r'coinflip\headsbtnsel.png').convert_alpha()
 
-        self.inputbox_img = pygame.image.load('inputbox.png').convert_alpha()
-        self.playbtn_img = pygame.image.load('playbtn.png').convert_alpha()
+        self.inputbox_img = pygame.image.load(r'coinflip\inputbox.png').convert_alpha()
+        self.playbtn_img = pygame.image.load(r'coinflip\playbtn.png').convert_alpha()
 
-        self.bigwin_img = pygame.image.load('bigwin.png').convert_alpha()
-        self.biglose_img = pygame.image.load('biglose.png').convert_alpha()
+        self.bigwin_img = pygame.image.load(r'coinflip\bigwin.png').convert_alpha()
+        self.biglose_img = pygame.image.load(r'coinflip\biglose.png').convert_alpha()
 
         self.input_rect = pygame.Rect(205, 530, 200, 40)
         self.input_text = ''
@@ -135,7 +137,7 @@ class CoinFlipGame:
         return sound
 
     def run(self):
-        dragon = AnimatedSprite(load_image("coin_sheet5x4v2.png"), 5, 4, 317, 233)
+        dragon = AnimatedSprite(load_image(r"coinflip\coin_sheet5x4v2.png"), 5, 4, 317, 233)
         running = True
 
         while running:
@@ -175,6 +177,13 @@ class CoinFlipGame:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
+                    sqlite_connection = sqlite3.connect('nebd52.db')
+                    cursor = sqlite_connection.cursor()
+                    print("Подключен к SQLite")
+                    result = cursor.execute("""SELECT id, login, money FROM ludiki""").fetchall()
+                    cursor.execute(f"""UPDATE ludiki SET money = {self.balance}, coin = 1 WHERE id = {self.user_id};""")
+                    sqlite_connection.commit()
+                    cursor.close()
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     mouse_pos = pygame.mouse.get_pos()
@@ -195,7 +204,7 @@ class CoinFlipGame:
                                 result = random.choice(['Heads', 'Tails'])
                                 self.history.append(result)
 
-                                self.play_sound("coin.mp3", volume=1)
+                                self.play_sound(r"coinflip\coin.mp3", volume=1)
                                 for i in range(60):
                                     self.screen.blit(self.background_img, (0, 0))
                                     self.screen.blit(balance_text, (WIDTH - 220, 35))
@@ -221,7 +230,7 @@ class CoinFlipGame:
                                 self.screen.blit(
                                     self.coin_heads_img if self.selected_side == "Heads" else self.coin_tails_img,
                                     (317, 233))
-                                self.play_sound("coin_finish.mp3", volume=2)
+                                self.play_sound(r"coinflip\coin_finish.mp3", volume=2)
                                 pygame.time.wait(600)
 
                                 # Отображение выигрыша или проигрыша
@@ -240,7 +249,7 @@ class CoinFlipGame:
                                     # Выигрыш
                                     if result == self.selected_side:
                                         self.balance += int(self.current_bet * self.coeff)
-                                        sound = self.play_sound("bigwin.mp3", loop=True, volume=0.15)
+                                        sound = self.play_sound(r"coinflip\bigwin.mp3", loop=True, volume=0.15)
                                         for _ in range(3):
                                             pygame.time.wait(5)
                                             create_particles((400, -20), self.all_sprites, 50)
@@ -264,7 +273,7 @@ class CoinFlipGame:
                                         sound.stop()
                                     # Проигрыш
                                     else:
-                                        self.play_sound("biglose.mp3", volume=0.1)
+                                        self.play_sound(r"coinflip\biglose.mp3", volume=0.1)
                                         self.screen.blit(self.biglose_img, (30, -50))
                                         pygame.time.wait(5)
                                         pygame.time.wait(5)
@@ -300,8 +309,3 @@ class CoinFlipGame:
 
         pygame.quit()
         sys.exit()
-
-
-if __name__ == "__main__":
-    game = CoinFlipGame()
-    game.run()

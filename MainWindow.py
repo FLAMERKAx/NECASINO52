@@ -1,7 +1,7 @@
 import sys
 import sqlite3
 import pygame
-
+from coinflip import CoinFlipGame
 
 pygame.init()
 
@@ -109,7 +109,6 @@ def main():
                     else:
 
                         # Логика регистрации
-
                         sqlite_connection = sqlite3.connect('nebd52.db')
                         cursor = sqlite_connection.cursor()
                         print("Подключен к SQLite")
@@ -192,9 +191,10 @@ def main():
         pygame.display.flip()
         clock.tick(30)
 
-class CoinFlipGame:
+class MainWindow:
     def __init__(self):
-        # main()
+        global current_money, current_user, current_username
+        main()
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         pygame.display.set_caption("NECASINO52")
         self.clock = pygame.time.Clock()
@@ -224,6 +224,7 @@ class CoinFlipGame:
         # self.play_sound("background.mp3", loop=True, volume=0.4)
 
         self.char_rect = pygame.Rect(485, 370, 40, 88)
+        self.char_confirmation_rect = pygame.Rect(505, 390, 1, 1)
 
         self.chair_left_top_rect = pygame.Rect(290, 280, 58, 82)
         self.chair_top_rect = pygame.Rect(469, 288, 58, 82)
@@ -266,6 +267,7 @@ class CoinFlipGame:
         return sound
 
     def run(self):
+        global current_money, current_user
 
 
         running = True
@@ -288,18 +290,33 @@ class CoinFlipGame:
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     mouse_pos = pygame.mouse.get_pos()
 
-                #     # Определение стороны выбранной пользователем
-                #     if heads_btn.collidepoint(mouse_pos):
-                #         self.selected_side = 'Heads'
+
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_e:
+                        if self.chair_left_top_rect.collidepoint(self.char_confirmation_rect[0], self.char_confirmation_rect[1]):
+                            print("aaaa")
+                            sqlite_connection = sqlite3.connect('nebd52.db')
+                            cursor = sqlite_connection.cursor()
+                            print("Подключен к SQLite")
+                            result = cursor.execute("""SELECT id, login, password, money FROM ludiki""").fetchall()
+                            print(result)
+                            for i in result:
+                                if i[1] == current_username:
+                                    current_money = i[3]
+                            coin = CoinFlipGame(current_money, current_user)
+                            coin.run()
+
                 #     elif tails_btn.collidepoint(mouse_pos):
                 #         self.selected_side = 'Tails'
                 #
-                if event.type == pygame.KEYDOWN:
+                if event.type == pygame.KEYDOWN: # self.char_confirmation_rect
                     if event.key == pygame.K_w:
                         if game_zone_rect.collidepoint(self.char_rect[0], self.char_rect[1]):
                             self.char_rect[0], self.char_rect[1] = self.char_rect[0], self.char_rect[1] - 20
+                            self.char_confirmation_rect[0], self.char_confirmation_rect[1] = self.char_confirmation_rect[0], self.char_confirmation_rect[1] - 20
                         else:
                             self.char_rect[0], self.char_rect[1] = self.char_rect[0], self.char_rect[1] + 40
+                            self.char_confirmation_rect[0], self.char_confirmation_rect[1] = self.char_confirmation_rect[0], self.char_confirmation_rect[1] + 40
                         for _ in range(2):
                             self.draw_all()
                             self.screen.blit(self.char_idle_img, self.char_rect)
@@ -309,8 +326,10 @@ class CoinFlipGame:
                     if event.key == pygame.K_d:
                         if game_zone_rect.collidepoint(self.char_rect[0], self.char_rect[1]):
                             self.char_rect[0], self.char_rect[1] = self.char_rect[0] + 40, self.char_rect[1]
+                            self.char_confirmation_rect[0], self.char_confirmation_rect[1] = self.char_confirmation_rect[0] + 40, self.char_confirmation_rect[1]
                         else:
                             self.char_rect[0], self.char_rect[1] = self.char_rect[0] - 60, self.char_rect[1]
+                            self.char_confirmation_rect[0], self.char_confirmation_rect[1] = self.char_confirmation_rect[0] - 60, self.char_confirmation_rect[1]
                         for _ in range(2):
                             self.draw_all()
                             self.screen.blit(self.char_walk_right_1_img, self.char_rect)
@@ -324,8 +343,10 @@ class CoinFlipGame:
                     if event.key == pygame.K_a:
                         if game_zone_rect.collidepoint(self.char_rect[0], self.char_rect[1]):
                             self.char_rect[0], self.char_rect[1] = self.char_rect[0] - 40, self.char_rect[1]
+                            self.char_confirmation_rect[0], self.char_confirmation_rect[1] = self.char_confirmation_rect[0] - 40, self.char_confirmation_rect[1]
                         else:
                             self.char_rect[0], self.char_rect[1] = self.char_rect[0] + 60, self.char_rect[1]
+                            self.char_confirmation_rect[0], self.char_confirmation_rect[1] = self.char_confirmation_rect[0] + 60, self.char_confirmation_rect[1]
                         for _ in range(2):
                             self.draw_all()
                             self.screen.blit(self.char_walk_left_1_img, self.char_rect)
@@ -338,8 +359,10 @@ class CoinFlipGame:
                     if event.key == pygame.K_s:
                         if game_zone_rect.collidepoint(self.char_rect[0], self.char_rect[1]):
                             self.char_rect[0], self.char_rect[1] = self.char_rect[0], self.char_rect[1] + 20
+                            self.char_confirmation_rect[0], self.char_confirmation_rect[1] = self.char_confirmation_rect[0], self.char_confirmation_rect[1] + 20
                         else:
                             self.char_rect[0], self.char_rect[1] = self.char_rect[0], self.char_rect[1] - 40
+                            self.char_confirmation_rect[0], self.char_confirmation_rect[1] = self.char_confirmation_rect[0], self.char_confirmation_rect[1] - 40
                         for _ in range(2):
                             self.draw_all()
                             self.screen.blit(self.char_idle_img, self.char_rect)
@@ -355,5 +378,5 @@ class CoinFlipGame:
 
 
 if __name__ == "__main__":
-    game = CoinFlipGame()
+    game = MainWindow()
     game.run()
