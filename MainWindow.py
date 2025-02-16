@@ -5,6 +5,7 @@ import pygame
 
 from coinflip import CoinFlipGame
 from double import DoubleGame
+from hilo import HiloGame
 
 pygame.init()
 
@@ -303,7 +304,6 @@ class MainWindow:
                 self.screen.blit(self.exit_button_img, self.exit_button_rect)
                 self.victory()
 
-
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
@@ -341,6 +341,18 @@ class MainWindow:
                             double = DoubleGame(current_money, current_user)
                             double.run_game()
 
+                        elif self.chair_left_down_rect.collidepoint(self.char_confirmation_rect[0],
+                                                                    self.char_confirmation_rect[1]):
+                            sqlite_connection = sqlite3.connect('nebd52.db')
+                            cursor = sqlite_connection.cursor()
+                            print("Подключен к SQLite")
+                            result = cursor.execute("""SELECT id, login, password, money FROM ludiki""").fetchall()
+                            print(result)
+                            for i in result:
+                                if i[1] == current_username:
+                                    current_money = i[3]
+                            hilo = HiloGame(current_money, current_user)
+
                         elif self.end_game_button_rect.collidepoint(self.char_confirmation_rect[0],
                                                                     self.char_confirmation_rect[1]):
                             self.victory_flag = True
@@ -351,7 +363,8 @@ class MainWindow:
                             cursor = sqlite_connection.cursor()
                             print("Подключен к SQLite")
                             result = cursor.execute(
-                                """SELECT id, login, password, money, coin, sonic, roulette, luckyloot, tetris, hilo FROM ludiki""").fetchall()
+                                """SELECT id, login, password, money, coin, sonic, roulette, luckyloot, tetris,
+                                 hilo FROM ludiki""").fetchall()
                             for i in result:
                                 if i[1] == current_username:
                                     self.victory_balance_text = self.font.render(f'{i[3]}', True, YELLOW)
@@ -369,18 +382,16 @@ class MainWindow:
                                 self.allgames_text = self.font.render(f'Нет...', True, YELLOW)
                             self.exit_button_rect = pygame.Rect(777, 640, 154, 95)
 
-
-
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_w:
                         if game_zone_rect.collidepoint(self.char_rect[0], self.char_rect[1]):
                             self.char_rect[0], self.char_rect[1] = self.char_rect[0], self.char_rect[1] - 20
                             self.char_confirmation_rect[0], self.char_confirmation_rect[1] = \
-                            self.char_confirmation_rect[0], self.char_confirmation_rect[1] - 20
+                                self.char_confirmation_rect[0], self.char_confirmation_rect[1] - 20
                         else:
                             self.char_rect[0], self.char_rect[1] = self.char_rect[0], self.char_rect[1] + 40
                             self.char_confirmation_rect[0], self.char_confirmation_rect[1] = \
-                            self.char_confirmation_rect[0], self.char_confirmation_rect[1] + 40
+                                self.char_confirmation_rect[0], self.char_confirmation_rect[1] + 40
                         for _ in range(2):
                             self.draw_all()
                             self.screen.blit(self.char_idle_img, self.char_rect)
@@ -391,11 +402,11 @@ class MainWindow:
                         if game_zone_rect.collidepoint(self.char_rect[0], self.char_rect[1]):
                             self.char_rect[0], self.char_rect[1] = self.char_rect[0] + 40, self.char_rect[1]
                             self.char_confirmation_rect[0], self.char_confirmation_rect[1] = \
-                            self.char_confirmation_rect[0] + 40, self.char_confirmation_rect[1]
+                                self.char_confirmation_rect[0] + 40, self.char_confirmation_rect[1]
                         else:
                             self.char_rect[0], self.char_rect[1] = self.char_rect[0] - 60, self.char_rect[1]
                             self.char_confirmation_rect[0], self.char_confirmation_rect[1] = \
-                            self.char_confirmation_rect[0] - 60, self.char_confirmation_rect[1]
+                                self.char_confirmation_rect[0] - 60, self.char_confirmation_rect[1]
                         for _ in range(2):
                             self.draw_all()
                             self.screen.blit(self.char_walk_right_1_img, self.char_rect)
@@ -410,11 +421,11 @@ class MainWindow:
                         if game_zone_rect.collidepoint(self.char_rect[0], self.char_rect[1]):
                             self.char_rect[0], self.char_rect[1] = self.char_rect[0] - 40, self.char_rect[1]
                             self.char_confirmation_rect[0], self.char_confirmation_rect[1] = \
-                            self.char_confirmation_rect[0] - 40, self.char_confirmation_rect[1]
+                                self.char_confirmation_rect[0] - 40, self.char_confirmation_rect[1]
                         else:
                             self.char_rect[0], self.char_rect[1] = self.char_rect[0] + 60, self.char_rect[1]
                             self.char_confirmation_rect[0], self.char_confirmation_rect[1] = \
-                            self.char_confirmation_rect[0] + 60, self.char_confirmation_rect[1]
+                                self.char_confirmation_rect[0] + 60, self.char_confirmation_rect[1]
                         for _ in range(2):
                             self.draw_all()
                             self.screen.blit(self.char_walk_left_1_img, self.char_rect)
@@ -428,11 +439,11 @@ class MainWindow:
                         if game_zone_rect.collidepoint(self.char_rect[0], self.char_rect[1]):
                             self.char_rect[0], self.char_rect[1] = self.char_rect[0], self.char_rect[1] + 20
                             self.char_confirmation_rect[0], self.char_confirmation_rect[1] = \
-                            self.char_confirmation_rect[0], self.char_confirmation_rect[1] + 20
+                                self.char_confirmation_rect[0], self.char_confirmation_rect[1] + 20
                         else:
                             self.char_rect[0], self.char_rect[1] = self.char_rect[0], self.char_rect[1] - 40
                             self.char_confirmation_rect[0], self.char_confirmation_rect[1] = \
-                            self.char_confirmation_rect[0], self.char_confirmation_rect[1] - 40
+                                self.char_confirmation_rect[0], self.char_confirmation_rect[1] - 40
                         for _ in range(2):
                             self.draw_all()
                             self.screen.blit(self.char_idle_img, self.char_rect)

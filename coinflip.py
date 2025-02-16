@@ -180,7 +180,6 @@ class CoinFlipGame:
                     sqlite_connection = sqlite3.connect('nebd52.db')
                     cursor = sqlite_connection.cursor()
                     print("Подключен к SQLite")
-                    result = cursor.execute("""SELECT id, login, money FROM ludiki""").fetchall()
                     cursor.execute(f"""UPDATE ludiki SET money = {self.balance}, coin = 1 WHERE id = {self.user_id};""")
                     sqlite_connection.commit()
                     cursor.close()
