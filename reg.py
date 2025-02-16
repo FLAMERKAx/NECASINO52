@@ -1,4 +1,5 @@
 import pygame
+import sqlite3
 from pygame.locals import *
 
 # Инициализация Pygame
@@ -40,7 +41,7 @@ class TextInputBox:
             else:
                 self.active = False
             # Изменяем цвет поля ввода при активации/деактивации
-            self.color = GREEN if self.active else LIGHT_GREY
+            self.color = RED if self.active else LIGHT_GREY
         if event.type == pygame.KEYDOWN:
             if self.active:
                 if event.key == pygame.K_RETURN:
@@ -65,6 +66,7 @@ class TextInputBox:
         screen.blit(self.txt_surface, (self.rect.x + 5, self.rect.y + 5))
 
 
+
 # Функция для отображения сообщения об ошибке
 def show_error_message(screen, message, color=RED):
     error_msg = LARGE_FONT.render(message, True, color)
@@ -77,12 +79,13 @@ def main():
     pygame.display.set_caption("Регистрация")
     clock = pygame.time.Clock()
 
+
     # Поля ввода
     username_input = TextInputBox(225, 120, 140, 32)
     password_input = TextInputBox(225, 170, 140, 32)
 
     # Кнопка "Зарегистрироваться"
-    register_button = pygame.Rect(SCREEN_WIDTH // 2 - 75, 230, 150, 40)
+    register_button = pygame.Rect(SCREEN_WIDTH // 2 - 75, 230, 160, 40)
 
     # Флаг для показа сообщения об ошибке
     show_error = False
@@ -103,16 +106,26 @@ def main():
                         # Логика регистрации
                         print(f"Имя пользователя: {username_input.text}")
                         print(f"Пароль: {password_input.text}")
+                        sqlite_connection = sqlite3.connect('necasino52.db')
+                        cursor = sqlite_connection.cursor()
+                        print("Подключен к SQLite")
+
+                        sqlite_insert_with_param = """INSERT INTO users
+                                                                  (username, password)
+                                                                  VALUES (?, ?);"""
+
+                        data_tuple = (username_input.text, password_input.text)
+                        cursor.execute(sqlite_insert_with_param, data_tuple)
+                        sqlite_connection.commit()
                         # Тут можно добавить сохранение данных в файл или базу данных
-                        done = True
             username_input.handle_event(event)
             password_input.handle_event(event)
 
-        screen.fill(WHITE)
+        screen.fill((101, 53, 155))
 
         # Отображаем заголовок
         title_text = LARGE_FONT.render("Регистрация", True, BLACK)
-        screen.blit(title_text, (160, 60))
+        screen.blit(title_text, (175, 60))
 
         # Отображаем текстовые поля
         username_label = SMALL_FONT.render("Имя пользователя:", True, BLACK)
@@ -135,12 +148,13 @@ def main():
         if show_error:
             show_error_message(screen, error_message)
 
-
+        font = pygame.font.SysFont('Comic Sans', 24, bold=True)
+        text = font.render('NECASINO52', True, BLACK)
+        screen.blit(text, (175, 15))
 
         pygame.display.flip()
         clock.tick(30)
 
-    pygame.quit()
 
 if __name__ == "__main__":
     main()
