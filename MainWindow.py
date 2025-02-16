@@ -2,12 +2,14 @@ import sys
 import sqlite3
 import pygame
 
+
 pygame.init()
 
 SMALL_FONT = pygame.font.SysFont("Comic Sans", 40)
 LARGE_FONT = pygame.font.SysFont("Comic Sans", 100)
 
 WHITE = (203, 195, 217)
+YELLOW = (255, 172, 80)
 BLACK = (0, 0, 0)
 GREY = (128, 128, 128)
 LIGHT_GREY = (200, 200, 200)
@@ -15,7 +17,10 @@ RED = (115, 51, 220)
 GREEN = (0, 255, 0)
 
 WIDTH, HEIGHT = 1080, 720
-game_zone_rect = pygame.Rect(205, 270, 640, 280)
+game_zone_rect = pygame.Rect(190, 250, 660, 300)
+current_user = ""
+current_money = 0
+current_username = ""
 
 
 class TextInputBox:
@@ -26,7 +31,6 @@ class TextInputBox:
         self.font = font
         self.txt_surface = font.render(text, True, WHITE)
         self.active = False
-        self.greeting = 'NECASINO52'
 
     def handle_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -64,14 +68,15 @@ class TextInputBox:
 
 # Функция для отображения сообщения об ошибке
 def show_error_message(screen, message, color=RED):
-    error_msg = LARGE_FONT.render(message, True, color)
+    error_msg = SMALL_FONT.render(message, True, color)
     rect = error_msg.get_rect(center=(WIDTH // 2, 300))
     screen.blit(error_msg, rect)
 
 
 def main():
+    global current_money, current_user, current_username
     registered_flag = False
-    background_img = pygame.image.load('reg_background.png')
+    background_img = pygame.image.load(r'mainwindow\reg_background.png')
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Регистрация")
     clock = pygame.time.Clock()
@@ -82,9 +87,9 @@ def main():
     password_input = TextInputBox(587, 482, 11, 88)
 
     register_button = pygame.Rect(65, 345, 480, 100)
-    register_img = pygame.image.load('signup_button.png').convert_alpha()
+    register_img = pygame.image.load(r'mainwindow\signup_button.png').convert_alpha()
     login_button = pygame.Rect(65, 555, 480, 100)
-    login_img = pygame.image.load('signin_button.png').convert_alpha()
+    login_img = pygame.image.load(r'mainwindow\signin_button.png').convert_alpha()
 
     # Флаг для показа сообщения об ошибке
     show_error = False
@@ -96,26 +101,70 @@ def main():
             if event.type == pygame.QUIT and registered_flag:
                 done = True
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if register_button.collidepoint(event.pos):
+                if login_button.collidepoint(event.pos):
                     # Проверка заполненности полей
                     if len(username_input.text) == 0 or len(password_input.text) == 0:
                         show_error = True
                         error_message = "Пожалуйста, заполните все поля!"
                     else:
+
                         # Логика регистрации
-                        print(f"Имя пользователя: {username_input.text}")
-                        print(f"Пароль: {password_input.text}")
+
                         sqlite_connection = sqlite3.connect('nebd52.db')
                         cursor = sqlite_connection.cursor()
                         print("Подключен к SQLite")
+                        result = cursor.execute("""SELECT id, login, password, money FROM ludiki""").fetchall()
+                        print(result)
+                        for i in result:
+                            if i[1] == username_input.text and i[2] == password_input.text:
+                                current_username = i[1]
+                                current_user = i[0]
+                                current_money = i[3]
+                                print(f"Имя пользователя: {username_input.text}")
+                                print(f"Пароль: {password_input.text}")
+                                registered_flag = True
+                                break
 
-                        sqlite_insert_with_param = """INSERT INTO ludiki
-                                                                  (username, password)
-                                                                  VALUES (?, ?);"""
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if register_button.collidepoint(event.pos):
+                        # Проверка заполненности полей
+                        if len(username_input.text) == 0 or len(password_input.text) == 0:
+                            show_error = True
+                            error_message = "Пожалуйста, заполните все поля!"
+                        else:
+                            # Логика регистрации
+                            sqlite_connection = sqlite3.connect('nebd52.db')
+                            cursor = sqlite_connection.cursor()
+                            print("Подключен к SQLite")
+                            result = cursor.execute("""SELECT id, login, money FROM ludiki""").fetchall()
+                            print(result)
+                            for i in result:
+                                if i[1] == username_input.text:
+                                    show_error = True
+                                    error_message = "Такой пользователь уже зарегистрирован!"
+                                    break
+                                else:
+                                    sqlite_insert_with_param = """INSERT INTO ludiki
+                                                                              (login, password)
+                                                                              VALUES (?, ?);"""
 
-                        data_tuple = (username_input.text, password_input.text)
-                        cursor.execute(sqlite_insert_with_param, data_tuple)
-                        sqlite_connection.commit()
+                                    data_tuple = (username_input.text, password_input.text)
+                                    cursor.execute(sqlite_insert_with_param, data_tuple)
+                                    sqlite_connection.commit()
+                                    result = cursor.execute("""SELECT id, login, money FROM ludiki""").fetchall()
+                                    if i[1] == username_input.text:
+                                        current_username = i[1]
+                                        current_user = i[0]
+                                        current_money = i[2]
+                                        print(f"Имя пользователя: {username_input.text}")
+                                        print(f"Пароль: {password_input.text}")
+                                        registered_flag = True
+                                        break
+
+                            for i in result:
+                                if i[1] == username_input.text:
+                                    pass
+
                         # Тут можно добавить сохранение данных в файл или базу данных
             username_input.handle_event(event)
             password_input.handle_event(event)
@@ -145,36 +194,70 @@ def main():
 
 class CoinFlipGame:
     def __init__(self):
-        main()
+        # main()
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
-        pygame.display.set_caption("CoinFlip")
+        pygame.display.set_caption("NECASINO52")
         self.clock = pygame.time.Clock()
         self.font = pygame.font.Font(None, 36)
         pygame.mixer.init()
 
-        self.background_img = pygame.image.load('background.png')
-        self.game_zone_img = pygame.image.load("game_zone.png")
+        self.background_img = pygame.image.load(r'mainwindow\background.png')
 
-        self.char_idle_img = pygame.image.load('char_idle.png').convert_alpha()
-        self.char_walk_left_1_img = pygame.image.load('char_walk_left_1.png').convert_alpha()
-        self.char_walk_left_2_img = pygame.image.load('char_walk_left_2.png').convert_alpha()
-        self.char_walk_right_1_img = pygame.image.load('char_walk_right_1.png').convert_alpha()
-        self.char_walk_right_2_img = pygame.image.load('char_walk_right_2.png').convert_alpha()
+        self.char_idle_img = pygame.image.load(r'mainwindow\char_idle.png').convert_alpha()
+        self.char_walk_left_1_img = pygame.image.load(r'mainwindow\char_walk_left_1.png').convert_alpha()
+        self.char_walk_left_2_img = pygame.image.load(r'mainwindow\char_walk_left_2.png').convert_alpha()
+        self.char_walk_right_1_img = pygame.image.load(r'mainwindow\char_walk_right_1.png').convert_alpha()
+        self.char_walk_right_2_img = pygame.image.load(r'mainwindow\char_walk_right_2.png').convert_alpha()
 
-        self.chair_top_img = pygame.image.load('chair_top.png').convert_alpha()
-        self.chair_left_img = pygame.image.load('chair_left.png').convert_alpha()
-        self.chair_left_top_img = pygame.image.load('chair_left_top.png').convert_alpha()
-        self.chair_right_img = pygame.image.load('chair_right.png').convert_alpha()
-        self.chair_right_top_img = pygame.image.load('chair_right_top.png').convert_alpha()
+        self.chair_top_img = pygame.image.load(r'mainwindow\chair_top.png').convert_alpha()
+        self.chair_left_img = pygame.image.load(r'mainwindow\chair_left.png').convert_alpha()
+        self.chair_left_down_img = pygame.image.load(r'mainwindow\chair_left_down.png').convert_alpha()
+        self.chair_left_top_img = pygame.image.load(r'mainwindow\chair_left_top.png').convert_alpha()
+        self.chair_right_img = pygame.image.load(r'mainwindow\chair_right.png').convert_alpha()
+        self.chair_right_top_img = pygame.image.load(r'mainwindow\chair_right_top.png').convert_alpha()
 
-        self.not_enough_money_img = pygame.image.load('not_enough_money.png').convert_alpha()
-        self.end_screen_img = pygame.image.load('end_screen.png').convert_alpha()
-        self.end_game_button_img = pygame.image.load('end_game_button.png').convert_alpha()
-        self.exit_button_img = pygame.image.load('exit_button.png').convert_alpha()
+        self.not_enough_money_img = pygame.image.load(r'mainwindow\not_enough_money.png').convert_alpha()
+        self.end_screen_img = pygame.image.load(r'mainwindow\end_screen.png').convert_alpha()
+        self.end_game_button_img = pygame.image.load(r'mainwindow\end_game_button.png').convert_alpha()
+        self.exit_button_img = pygame.image.load(r'mainwindow\exit_button.png').convert_alpha()
 
         # self.play_sound("background.mp3", loop=True, volume=0.4)
 
         self.char_rect = pygame.Rect(485, 370, 40, 88)
+
+        self.chair_left_top_rect = pygame.Rect(290, 280, 58, 82)
+        self.chair_top_rect = pygame.Rect(469, 288, 58, 82)
+        self.chair_left_rect = pygame.Rect(225, 385, 58, 82)
+        self.chair_left_down_rect = pygame.Rect(360, 480, 58, 82)
+        self.chair_right_rect = pygame.Rect(772, 380, 58, 82)
+        self.chair_right_top_rect = pygame.Rect(713, 300, 58, 82)
+
+        self.not_enough_money_rect = pygame.Rect(445, 512, 58, 82)
+        self.end_screen_rect = pygame.Rect(133, 44, 818, 584)
+        self.exit_button_rect = pygame.Rect(777, 636, 296, 69)
+        self.end_game_button_rect = pygame.Rect(0, 0, 154, 95)
+
+    def draw_all(self):
+        global game_zone_rect
+        self.screen.blit(self.background_img, (0, 0))
+
+        self.screen.blit(self.chair_left_top_img, self.chair_left_top_rect)
+        self.screen.blit(self.chair_top_img, self.chair_top_rect)
+        self.screen.blit(self.chair_left_img, self.chair_left_rect)
+        self.screen.blit(self.chair_left_down_img, self.chair_left_down_rect)
+        self.screen.blit(self.chair_right_img, self.chair_right_rect)
+        self.screen.blit(self.chair_right_top_img, self.chair_right_top_rect)
+        if current_money < 100000:
+            self.screen.blit(self.not_enough_money_img, self.not_enough_money_rect)
+        else:
+            self.end_game_button_rect = pygame.Rect(460, 620, 154, 95)
+            game_zone_rect = pygame.Rect(190, 250, 660, 600)
+            self.screen.blit(self.end_game_button_img, self.end_game_button_rect)
+        balance_text = self.font.render(f'Баланс: {current_money}', True, YELLOW)
+        user_text = self.font.render(f'Пользователь: {current_username}', True, YELLOW)
+        self.screen.blit(balance_text, (810, 30))
+        self.screen.blit(user_text, (810, 70))
+
 
     def play_sound(self, path, volume=0.5, loop=False):
         sound = pygame.mixer.Sound(path)
@@ -189,16 +272,14 @@ class CoinFlipGame:
 
         while running:
 
-            self.screen.blit(self.background_img, (0, 0))
+            self.draw_all()
             self.screen.blit(self.char_idle_img, self.char_rect)
-            self.screen.blit(self.game_zone_img, game_zone_rect)
 
             #
             # tails_btn = pygame.Rect(433, 424, 150, 50)
             # self.screen.blit(self.tailsbtn_img if self.selected_side != 'Tails' else self.tailsbtnsel_img, tails_btn)
             #
-            # coeff_text = self.font.render(f'Кэф: x{self.coeff:.2f}', True, BLACK)
-            # self.screen.blit(coeff_text, (WIDTH - 220, 80))
+
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -216,11 +297,11 @@ class CoinFlipGame:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_w:
                         if game_zone_rect.collidepoint(self.char_rect[0], self.char_rect[1]):
-                            self.char_rect[0], self.char_rect[1] = self.char_rect[0], self.char_rect[1] - 40
+                            self.char_rect[0], self.char_rect[1] = self.char_rect[0], self.char_rect[1] - 20
                         else:
-                            self.char_rect[0], self.char_rect[1] = self.char_rect[0], self.char_rect[1] + 80
+                            self.char_rect[0], self.char_rect[1] = self.char_rect[0], self.char_rect[1] + 40
                         for _ in range(2):
-                            self.screen.blit(self.background_img, (0, 0))
+                            self.draw_all()
                             self.screen.blit(self.char_idle_img, self.char_rect)
                             pygame.display.flip()
                             pygame.time.wait(50)
@@ -229,14 +310,14 @@ class CoinFlipGame:
                         if game_zone_rect.collidepoint(self.char_rect[0], self.char_rect[1]):
                             self.char_rect[0], self.char_rect[1] = self.char_rect[0] + 40, self.char_rect[1]
                         else:
-                            self.char_rect[0], self.char_rect[1] = self.char_rect[0] - 80, self.char_rect[1]
+                            self.char_rect[0], self.char_rect[1] = self.char_rect[0] - 60, self.char_rect[1]
                         for _ in range(2):
-                            self.screen.blit(self.background_img, (0, 0))
+                            self.draw_all()
                             self.screen.blit(self.char_walk_right_1_img, self.char_rect)
                             pygame.display.flip()
                             pygame.time.wait(25)
                             print(self.char_rect[0], self.char_rect[1])
-                            self.screen.blit(self.background_img, (0, 0))
+                            self.draw_all()
                             self.screen.blit(self.char_walk_right_2_img, self.char_rect)
                             pygame.display.flip()
                             pygame.time.wait(25)
@@ -244,13 +325,13 @@ class CoinFlipGame:
                         if game_zone_rect.collidepoint(self.char_rect[0], self.char_rect[1]):
                             self.char_rect[0], self.char_rect[1] = self.char_rect[0] - 40, self.char_rect[1]
                         else:
-                            self.char_rect[0], self.char_rect[1] = self.char_rect[0] + 80, self.char_rect[1]
+                            self.char_rect[0], self.char_rect[1] = self.char_rect[0] + 60, self.char_rect[1]
                         for _ in range(2):
-                            self.screen.blit(self.background_img, (0, 0))
+                            self.draw_all()
                             self.screen.blit(self.char_walk_left_1_img, self.char_rect)
                             pygame.display.flip()
                             pygame.time.wait(25)
-                            self.screen.blit(self.background_img, (0, 0))
+                            self.draw_all()
                             self.screen.blit(self.char_walk_left_2_img, self.char_rect)
                             pygame.display.flip()
                             pygame.time.wait(25)
@@ -258,9 +339,9 @@ class CoinFlipGame:
                         if game_zone_rect.collidepoint(self.char_rect[0], self.char_rect[1]):
                             self.char_rect[0], self.char_rect[1] = self.char_rect[0], self.char_rect[1] + 20
                         else:
-                            self.char_rect[0], self.char_rect[1] = self.char_rect[0], self.char_rect[1] - 80
+                            self.char_rect[0], self.char_rect[1] = self.char_rect[0], self.char_rect[1] - 40
                         for _ in range(2):
-                            self.screen.blit(self.background_img, (0, 0))
+                            self.draw_all()
                             self.screen.blit(self.char_idle_img, self.char_rect)
                             pygame.display.flip()
                             pygame.time.wait(50)
