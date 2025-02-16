@@ -1,19 +1,22 @@
 import pygame
 import sys
 import random
+import sqlite3
 
 
 # Класс игры
 class DoubleGame():
-    def __init__(self):
+    def __init__(self, money, id):
         # Инициализация Pygame
         pygame.init()
-
+        pygame.mixer.init()
         # Создание окна
         self.screen = pygame.display.set_mode((600, 400))
         pygame.display.set_caption("Double Game")
 
         # Основные параметры
+        self.user_id = id
+
         self.bg_color = (101, 53, 155)
         self.num_fields = 50
         self.field_width = 50
@@ -42,13 +45,29 @@ class DoubleGame():
         self.win = None
 
         # Баланс игрока
-        self.balance = 500  # Начальный баланс
+        self.balance = money
 
         # Текущая ставка
         self.current_bet = 0
 
         # Переменная для текста предупреждения
         self.warning_text = None
+
+        self.background = pygame.image.load(r"double\background.png").convert_alpha()
+        self.spin_button_img = pygame.image.load(r"double\spin_button.png").convert_alpha()
+        self.spin_button_inactive_img = pygame.image.load(r"double\spin_button_inactive.png").convert_alpha()
+
+        self.red_button_clicked_img = pygame.image.load(r"double\red_button_clicked.png").convert_alpha()
+        self.red_button_inactive_img = pygame.image.load(r"double\red_button.png").convert_alpha()
+
+        self.black_button_clicked_img = pygame.image.load(r"double\black_button_clicked.png").convert_alpha()
+        self.black_button_inactive_img = pygame.image.load(r"double\black_button.png").convert_alpha()
+
+    def play_sound(self, path, volume=0.5, loop=False):
+        sound = pygame.mixer.Sound(path)
+        sound.set_volume(volume)
+        sound.play(loops=-1 if loop else 0)
+        return sound
 
     # Функция создания массива с 1 и 0 для отображения красных и черных полей
     def generate_roulette(self):
@@ -68,8 +87,6 @@ class DoubleGame():
         points = [(300, 250), (275, 300), (325, 300)]
         pygame.draw.polygon(self.screen, (0, 128, 255), points)
         font = pygame.font.SysFont('Comic sans', 32, bold=True)
-        text = font.render("NECASINO52", True, ('black'))
-        self.screen.blit(text, (200, 75))
         for index, value in enumerate(self.lst):
             color = "red" if value == 0 else "black"
             rect = pygame.Rect(x_pos, y_pos, self.field_width, self.field_height)
@@ -105,37 +122,27 @@ class DoubleGame():
 
     # Отображение кнопки Spin
     def draw_button_spin(self):
-        button_rect = pygame.Rect(225, 325, 150, 50)
+        button_rect = pygame.Rect(210, 320, 150, 50)
 
         # Меняем цвет кнопки в зависимости от состояния is_spinning
         if self.is_spinning:
-            button_color = (150, 150, 150)  # Серый цвет для неактивного состояния
+            self.screen.blit(self.spin_button_inactive_img, button_rect)
         else:
-            button_color = (255, 165, 0)  # Оранжевый цвет для активного состояния
+            self.screen.blit(self.spin_button_img, button_rect)
 
-        pygame.draw.rect(self.screen, button_color, button_rect)
 
-        font = pygame.font.SysFont('Arial', 18)
-        text = font.render("Spin", True, (0, 0, 0))
-        text_rect = text.get_rect(center=button_rect.center)
-        self.screen.blit(text, text_rect)
-
-    def draw_color_buttons(self, name, color, x_cord, y_cord):
-        button_rect = pygame.Rect(x_cord, y_cord, 150, 50)
-        if self.color_selected == 0 and name == 'Черный X2':
-            button_color = (255, 165, 0)  # Измененный цвет для выбранной черной кнопки
-        elif self.color_selected == 1 and name == 'Красный X2':
-            button_color = (255, 165, 0)  # Измененный цвет для выбранной красной кнопки
+    def draw_color_buttons(self):
+        black_rect = pygame.Rect(35, 320, 150, 50)
+        red_rect = pygame.Rect(385, 320, 150, 50)
+        if self.color_selected == 0:
+            self.screen.blit(self.black_button_clicked_img, black_rect)
+            self.screen.blit(self.red_button_inactive_img, red_rect)
+        elif self.color_selected == 1:
+            self.screen.blit(self.red_button_clicked_img, red_rect)
+            self.screen.blit(self.black_button_inactive_img, black_rect)
         else:
-            button_color = color  # Обычный цвет кнопки
-
-        pygame.draw.rect(self.screen, button_color, button_rect)
-
-        text_color = "black" if color == 'red' else 'white'
-        font = pygame.font.SysFont('Arial', 18)
-        text = font.render(name, True, text_color)
-        text_rect = text.get_rect(center=button_rect.center)
-        self.screen.blit(text, text_rect)
+            self.screen.blit(self.black_button_inactive_img, black_rect)
+            self.screen.blit(self.red_button_inactive_img, red_rect)
 
     # Проверка клика по кнопкам выбора цвета
     def check_color_button_click(self, pos, size_x, size_y):
@@ -152,22 +159,18 @@ class DoubleGame():
     # Отображает текущий баланс
     def display_balance(self):
         font = pygame.font.SysFont('Arial', 24)
-        balance_text = f"Баланс: {self.balance}"
+        balance_text = f"{self.balance}"
         text_surface = font.render(balance_text, True, (255, 255, 255))
-        self.screen.blit(text_surface, (20, 30))
+        self.screen.blit(text_surface, (120, 24))
 
     # Поле ввода для ставки
     def bet_input_field(self):
-        input_rect = pygame.Rect(350, 25, 140, 32)
+        input_rect = pygame.Rect(348, 27, 140, 34)
         pygame.draw.rect(self.screen, (230, 230, 230), input_rect)
         font = pygame.font.SysFont('Arial', 16)
         bet_text = font.render(str(self.current_bet), True, (0, 0, 0))
         self.screen.blit(bet_text, (input_rect.x + 5, input_rect.y + 8))
         pygame.draw.rect(self.screen, (0, 0, 0), input_rect, 2)
-        font = pygame.font.SysFont('Arial', 24)
-        balance_text = f"Ставка: "
-        text_surface = font.render(balance_text, True, (255, 255, 255))
-        self.screen.blit(text_surface, (250, 30))
 
     # Основной игровой цикл
     def run_game(self):
@@ -179,6 +182,14 @@ class DoubleGame():
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
+                    sqlite_connection = sqlite3.connect('nebd52.db')
+                    cursor = sqlite_connection.cursor()
+                    print("Подключен к SQLite")
+                    result = cursor.execute("""SELECT id, login, money FROM ludiki""").fetchall()
+                    cursor.execute(f"""UPDATE ludiki SET money = {self.balance}, roulette = 1 WHERE id = {self.user_id};""")
+                    sqlite_connection.commit()
+                    cursor.close()
+
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     mouse_pos = pygame.mouse.get_pos()
                     if self.check_color_button_click(mouse_pos, 75, 325):
@@ -191,7 +202,8 @@ class DoubleGame():
                         if self.color_selected is not None:
                             if self.balance >= self.current_bet > 0:
                                 self.generate_roulette()  # Генерируем новую рулетку
-                                self.is_spinning = True  # Начинаем вращение
+                                self.is_spinning = True
+                                self.play_sound(r"double\roulette.mp3", volume=0.5)
                                 self.offset_x = 0
                                 self.click_count += 1
                             else:
@@ -218,33 +230,31 @@ class DoubleGame():
             # Ограничиваем частоту кадров
             self.clock.tick(60)
             # Очистка экрана перед каждой итерацией игрового цикла
-            self.screen.fill(self.bg_color)
+            self.screen.blit(self.background, (0, 0))
+            # self.screen.fill(self.bg_color)
 
             # Отображение сообщений о результате
             font = pygame.font.SysFont('Comic sans', 22, bold=True)
             if self.clck > 0:
                 if self.win:
                     text = font.render("Поздравляю! Вы победили", True, ('green'))
-                    self.screen.blit(text, (175, 110))
+                    self.screen.blit(text, (155, 140))
                 elif self.win == None:
                     pass
                 else:
                     text = font.render("Поражение, в следующий раз повезет", True, ('red'))
-                    self.screen.blit(text, (100, 110))
+                    self.screen.blit(text, (80, 140))
 
             # Отображение рулетки
             if self.lst and self.is_spinning:
                 self.update_offset()
                 self.draw_roulette()
-                if self.color_selected is not None:
-                    pygame.draw.rect(self.screen, (101, 53, 155), (1, 75, self.screen.get_width(), 100), 0)
 
             # Отображение кнопок
             if self.lst:
                 self.draw_roulette()
 
-            self.draw_color_buttons('Черный X2', 'black', 50, 325)
-            self.draw_color_buttons('Красный X2', 'red', 400, 325)
+            self.draw_color_buttons()
             self.draw_button_spin()
             self.bet_input_field()
             self.display_balance()

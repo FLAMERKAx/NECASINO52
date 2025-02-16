@@ -1,7 +1,10 @@
-import sys
 import sqlite3
+import sys
+
 import pygame
+
 from coinflip import CoinFlipGame
+from double import DoubleGame
 
 pygame.init()
 
@@ -81,7 +84,6 @@ def main():
     pygame.display.set_caption("Регистрация")
     clock = pygame.time.Clock()
 
-
     # Поля ввода
     username_input = TextInputBox(587, 285, 0, 88)
     password_input = TextInputBox(587, 482, 11, 88)
@@ -122,6 +124,11 @@ def main():
                                 print(f"Имя пользователя: {username_input.text}")
                                 print(f"Пароль: {password_input.text}")
                                 registered_flag = True
+                                msg = SMALL_FONT.render("Вы успешно Вошли!", True, GREEN)
+                                rect = msg.get_rect(center=(WIDTH // 2, 300))
+                                screen.blit(msg, rect)
+                                pygame.display.flip()
+                                pygame.time.wait(300)
                                 break
 
                 elif event.type == pygame.MOUSEBUTTONDOWN:
@@ -158,6 +165,11 @@ def main():
                                         print(f"Имя пользователя: {username_input.text}")
                                         print(f"Пароль: {password_input.text}")
                                         registered_flag = True
+                                        msg = SMALL_FONT.render("Вы успешно Зарегистрировались!", True, GREEN)
+                                        rect = msg.get_rect(center=(WIDTH // 2, 300))
+                                        screen.blit(msg, rect)
+                                        pygame.display.flip()
+                                        pygame.time.wait(300)
                                         break
 
                             for i in result:
@@ -181,7 +193,6 @@ def main():
         screen.blit(register_img, register_button)
         screen.blit(login_img, login_button)
 
-
         # Показываем сообщение об ошибке, если необходимо
         if show_error:
             show_error_message(screen, error_message)
@@ -191,6 +202,7 @@ def main():
         pygame.display.flip()
         clock.tick(30)
 
+
 class MainWindow:
     def __init__(self):
         global current_money, current_user, current_username
@@ -199,6 +211,12 @@ class MainWindow:
         pygame.display.set_caption("NECASINO52")
         self.clock = pygame.time.Clock()
         self.font = pygame.font.Font(None, 36)
+        self.victory_flag = False
+
+        self.victory_balance_text = ""
+        self.allgames_text = ""
+        self.millionaire_text = ""
+
         pygame.mixer.init()
 
         self.background_img = pygame.image.load(r'mainwindow\background.png')
@@ -235,7 +253,7 @@ class MainWindow:
 
         self.not_enough_money_rect = pygame.Rect(445, 512, 58, 82)
         self.end_screen_rect = pygame.Rect(133, 44, 818, 584)
-        self.exit_button_rect = pygame.Rect(777, 636, 296, 69)
+        self.exit_button_rect = pygame.Rect(0, 0, 296, 69)
         self.end_game_button_rect = pygame.Rect(0, 0, 154, 95)
 
     def draw_all(self):
@@ -259,6 +277,13 @@ class MainWindow:
         self.screen.blit(balance_text, (810, 30))
         self.screen.blit(user_text, (810, 70))
 
+    def victory(self):
+        self.screen.blit(self.end_screen_img, self.end_screen_rect)
+        self.screen.blit(self.victory_balance_text, (352, 247))
+        self.screen.blit(self.allgames_text, (352, 365))
+        self.screen.blit(self.millionaire_text, (352, 447))
+        self.char_rect = self.char_rect
+        pygame.display.flip()
 
     def play_sound(self, path, volume=0.5, loop=False):
         sound = pygame.mixer.Sound(path)
@@ -268,19 +293,15 @@ class MainWindow:
 
     def run(self):
         global current_money, current_user
-
-
         running = True
 
         while running:
 
             self.draw_all()
             self.screen.blit(self.char_idle_img, self.char_rect)
-
-            #
-            # tails_btn = pygame.Rect(433, 424, 150, 50)
-            # self.screen.blit(self.tailsbtn_img if self.selected_side != 'Tails' else self.tailsbtnsel_img, tails_btn)
-            #
+            if self.victory_flag:
+                self.screen.blit(self.exit_button_img, self.exit_button_rect)
+                self.victory()
 
 
             for event in pygame.event.get():
@@ -289,12 +310,13 @@ class MainWindow:
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     mouse_pos = pygame.mouse.get_pos()
-
+                    if self.exit_button_rect.collidepoint(mouse_pos):
+                        pygame.quit()
 
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_e:
-                        if self.chair_left_top_rect.collidepoint(self.char_confirmation_rect[0], self.char_confirmation_rect[1]):
-                            print("aaaa")
+                        if self.chair_left_top_rect.collidepoint(self.char_confirmation_rect[0],
+                                                                 self.char_confirmation_rect[1]):
                             sqlite_connection = sqlite3.connect('nebd52.db')
                             cursor = sqlite_connection.cursor()
                             print("Подключен к SQLite")
@@ -306,17 +328,59 @@ class MainWindow:
                             coin = CoinFlipGame(current_money, current_user)
                             coin.run()
 
-                #     elif tails_btn.collidepoint(mouse_pos):
-                #         self.selected_side = 'Tails'
-                #
-                if event.type == pygame.KEYDOWN: # self.char_confirmation_rect
+                        elif self.chair_right_rect.collidepoint(self.char_confirmation_rect[0],
+                                                                self.char_confirmation_rect[1]):
+                            sqlite_connection = sqlite3.connect('nebd52.db')
+                            cursor = sqlite_connection.cursor()
+                            print("Подключен к SQLite")
+                            result = cursor.execute("""SELECT id, login, password, money FROM ludiki""").fetchall()
+                            print(result)
+                            for i in result:
+                                if i[1] == current_username:
+                                    current_money = i[3]
+                            double = DoubleGame(current_money, current_user)
+                            double.run_game()
+
+                        elif self.end_game_button_rect.collidepoint(self.char_confirmation_rect[0],
+                                                                    self.char_confirmation_rect[1]):
+                            self.victory_flag = True
+                            self.play_sound(r"mainwindow\victory.wav", volume=1)
+                            millionaire = False
+                            allgames = False
+                            sqlite_connection = sqlite3.connect('nebd52.db')
+                            cursor = sqlite_connection.cursor()
+                            print("Подключен к SQLite")
+                            result = cursor.execute(
+                                """SELECT id, login, password, money, coin, sonic, roulette, luckyloot, tetris, hilo FROM ludiki""").fetchall()
+                            for i in result:
+                                if i[1] == current_username:
+                                    self.victory_balance_text = self.font.render(f'{i[3]}', True, YELLOW)
+                                    if i[3] >= 1000000:
+                                        millionaire = True
+                                    if i[4] and i[5] and i[6] and i[7] and i[8] and i[9]:
+                                        allgames = True
+                            if millionaire:
+                                self.millionaire_text = self.font.render(f'Да!', True, YELLOW)
+                            else:
+                                self.millionaire_text = self.font.render(f'Нет...', True, YELLOW)
+                            if allgames:
+                                self.allgames_text = self.font.render(f'Да!', True, YELLOW)
+                            else:
+                                self.allgames_text = self.font.render(f'Нет...', True, YELLOW)
+                            self.exit_button_rect = pygame.Rect(777, 640, 154, 95)
+
+
+
+                if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_w:
                         if game_zone_rect.collidepoint(self.char_rect[0], self.char_rect[1]):
                             self.char_rect[0], self.char_rect[1] = self.char_rect[0], self.char_rect[1] - 20
-                            self.char_confirmation_rect[0], self.char_confirmation_rect[1] = self.char_confirmation_rect[0], self.char_confirmation_rect[1] - 20
+                            self.char_confirmation_rect[0], self.char_confirmation_rect[1] = \
+                            self.char_confirmation_rect[0], self.char_confirmation_rect[1] - 20
                         else:
                             self.char_rect[0], self.char_rect[1] = self.char_rect[0], self.char_rect[1] + 40
-                            self.char_confirmation_rect[0], self.char_confirmation_rect[1] = self.char_confirmation_rect[0], self.char_confirmation_rect[1] + 40
+                            self.char_confirmation_rect[0], self.char_confirmation_rect[1] = \
+                            self.char_confirmation_rect[0], self.char_confirmation_rect[1] + 40
                         for _ in range(2):
                             self.draw_all()
                             self.screen.blit(self.char_idle_img, self.char_rect)
@@ -326,10 +390,12 @@ class MainWindow:
                     if event.key == pygame.K_d:
                         if game_zone_rect.collidepoint(self.char_rect[0], self.char_rect[1]):
                             self.char_rect[0], self.char_rect[1] = self.char_rect[0] + 40, self.char_rect[1]
-                            self.char_confirmation_rect[0], self.char_confirmation_rect[1] = self.char_confirmation_rect[0] + 40, self.char_confirmation_rect[1]
+                            self.char_confirmation_rect[0], self.char_confirmation_rect[1] = \
+                            self.char_confirmation_rect[0] + 40, self.char_confirmation_rect[1]
                         else:
                             self.char_rect[0], self.char_rect[1] = self.char_rect[0] - 60, self.char_rect[1]
-                            self.char_confirmation_rect[0], self.char_confirmation_rect[1] = self.char_confirmation_rect[0] - 60, self.char_confirmation_rect[1]
+                            self.char_confirmation_rect[0], self.char_confirmation_rect[1] = \
+                            self.char_confirmation_rect[0] - 60, self.char_confirmation_rect[1]
                         for _ in range(2):
                             self.draw_all()
                             self.screen.blit(self.char_walk_right_1_img, self.char_rect)
@@ -343,10 +409,12 @@ class MainWindow:
                     if event.key == pygame.K_a:
                         if game_zone_rect.collidepoint(self.char_rect[0], self.char_rect[1]):
                             self.char_rect[0], self.char_rect[1] = self.char_rect[0] - 40, self.char_rect[1]
-                            self.char_confirmation_rect[0], self.char_confirmation_rect[1] = self.char_confirmation_rect[0] - 40, self.char_confirmation_rect[1]
+                            self.char_confirmation_rect[0], self.char_confirmation_rect[1] = \
+                            self.char_confirmation_rect[0] - 40, self.char_confirmation_rect[1]
                         else:
                             self.char_rect[0], self.char_rect[1] = self.char_rect[0] + 60, self.char_rect[1]
-                            self.char_confirmation_rect[0], self.char_confirmation_rect[1] = self.char_confirmation_rect[0] + 60, self.char_confirmation_rect[1]
+                            self.char_confirmation_rect[0], self.char_confirmation_rect[1] = \
+                            self.char_confirmation_rect[0] + 60, self.char_confirmation_rect[1]
                         for _ in range(2):
                             self.draw_all()
                             self.screen.blit(self.char_walk_left_1_img, self.char_rect)
@@ -359,10 +427,12 @@ class MainWindow:
                     if event.key == pygame.K_s:
                         if game_zone_rect.collidepoint(self.char_rect[0], self.char_rect[1]):
                             self.char_rect[0], self.char_rect[1] = self.char_rect[0], self.char_rect[1] + 20
-                            self.char_confirmation_rect[0], self.char_confirmation_rect[1] = self.char_confirmation_rect[0], self.char_confirmation_rect[1] + 20
+                            self.char_confirmation_rect[0], self.char_confirmation_rect[1] = \
+                            self.char_confirmation_rect[0], self.char_confirmation_rect[1] + 20
                         else:
                             self.char_rect[0], self.char_rect[1] = self.char_rect[0], self.char_rect[1] - 40
-                            self.char_confirmation_rect[0], self.char_confirmation_rect[1] = self.char_confirmation_rect[0], self.char_confirmation_rect[1] - 40
+                            self.char_confirmation_rect[0], self.char_confirmation_rect[1] = \
+                            self.char_confirmation_rect[0], self.char_confirmation_rect[1] - 40
                         for _ in range(2):
                             self.draw_all()
                             self.screen.blit(self.char_idle_img, self.char_rect)
