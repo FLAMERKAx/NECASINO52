@@ -18,38 +18,6 @@ all_sprites = pygame.sprite.Group()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
 
-def load_image(filename):
-    try:
-        image = pygame.image.load(filename)
-        return image.convert_alpha()
-    except pygame.error as e:
-        print(f"Unable to load image: {filename}")
-        raise SystemExit(e)
-
-
-class AnimatedSprite(pygame.sprite.Sprite):
-    def __init__(self, sheet, columns, rows, x, y):
-        super().__init__(all_sprites)
-        self.frames = []
-        self.cut_sheet(sheet, columns, rows)
-        self.cur_frame = 0
-        self.image = self.frames[self.cur_frame]
-        self.rect = self.rect.move(x, y)
-
-    def cut_sheet(self, sheet, columns, rows):
-        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
-                                sheet.get_height() // rows)
-        for j in range(rows):
-            for i in range(columns):
-                frame_location = (self.rect.w * i, self.rect.h * j)
-                self.frames.append(sheet.subsurface(pygame.Rect(
-                    frame_location, self.rect.size)))
-
-    def update(self):
-        self.cur_frame = (self.cur_frame + 1) % len(self.frames)
-        self.image = self.frames[self.cur_frame]
-
-
 class CoinFlipGame:
     def __init__(self):
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -59,6 +27,24 @@ class CoinFlipGame:
         pygame.mixer.init()
 
         self.background_img = pygame.image.load('background.png')
+
+        self.background_img = pygame.image.load('char_idle.png').convert_alpha()
+        self.background_img = pygame.image.load('char_walk_left_1.png').convert_alpha()
+        self.background_img = pygame.image.load('char_walk_left_2.png').convert_alpha()
+        self.background_img = pygame.image.load('char_walk_right_1.png').convert_alpha()
+        self.background_img = pygame.image.load('char_walk_right_2.png').convert_alpha()
+
+        self.background_img = pygame.image.load('chair_top.png').convert_alpha()
+        self.background_img = pygame.image.load('chair_left.png').convert_alpha()
+        self.background_img = pygame.image.load('chair_left_top.png').convert_alpha()
+        self.background_img = pygame.image.load('chair_right.png').convert_alpha()
+        self.background_img = pygame.image.load('chair_right_top.png').convert_alpha()
+
+        self.background_img = pygame.image.load('not_enough_money.png').convert_alpha()
+        self.background_img = pygame.image.load('end_screen.png').convert_alpha()
+        self.background_img = pygame.image.load('end_game_button.png').convert_alpha()
+        self.background_img = pygame.image.load('exit_button.png').convert_alpha()
+
         # self.play_sound("background.mp3", loop=True, volume=0.4)
 
         self.input_rect = pygame.Rect(205, 530, 200, 40)
@@ -72,13 +58,13 @@ class CoinFlipGame:
 
     def run(self):
 
-        char = AnimatedSprite(load_image("char.png").convert_alpha(), 3, 4, 317, 233)
 
         running = True
 
         while running:
 
             self.screen.blit(self.background_img, (0, 0))
+
             #
             # tails_btn = pygame.Rect(433, 424, 150, 50)
             # self.screen.blit(self.tailsbtn_img if self.selected_side != 'Tails' else self.tailsbtnsel_img, tails_btn)
@@ -101,45 +87,12 @@ class CoinFlipGame:
                 #
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_w:
-                        char.cur_frame = 0
                         for _ in range(2):
-                            print(char.cur_frame)
                             self.screen.blit(self.background_img, (0, 0))
                             pygame.time.wait(200)
                             all_sprites.draw(screen)
                             pygame.display.flip()
                             char.update()
-                        char.cur_frame = 0
-                    if event.key == pygame.K_d:
-                        char.cur_frame = 3
-                        for _ in range(2):
-                            print(char.cur_frame)
-                            self.screen.blit(self.background_img, (0, 0))
-                            pygame.time.wait(200)
-                            all_sprites.draw(screen)
-                            pygame.display.flip()
-                            char.update()
-                        char.cur_frame = 3
-                    if event.key == pygame.K_a:
-                        char.cur_frame = 6
-                        for _ in range(2):
-                            print(char.cur_frame)
-                            self.screen.blit(self.background_img, (0, 0))
-                            pygame.time.wait(200)
-                            all_sprites.draw(screen)
-                            pygame.display.flip()
-                            char.update()
-                        char.cur_frame = 6
-                    if event.key == pygame.K_s:
-                        char.cur_frame = 9
-                        for _ in range(2):
-                            print(char.cur_frame)
-                            self.screen.blit(self.background_img, (0, 0))
-                            pygame.time.wait(200)
-                            all_sprites.draw(screen)
-                            pygame.display.flip()
-                            char.update()
-                        char.cur_frame = 9
 
             pygame.display.flip()
             self.clock.tick(60)
