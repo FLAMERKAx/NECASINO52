@@ -1,6 +1,6 @@
 import sys
 import random
-import math
+import sqlite3
 import pygame
 
 # Настройки окна
@@ -17,15 +17,15 @@ BLUE = (0, 0, 255)
 YELLOW = (255, 255, 0)
 
 # Начальная скорость роста коэффициента
-BASE_COEFFICIENT_GROWTH_RATE = 0.001
+BASE_COEFFICIENT_GROWTH_RATE = 0.005
 
 # Пороговые значения для штрафов и банов
 LOW_COEFFICIENT_THRESHOLD = 1.10
 MAX_LOW_COEFFICIENTS_ALLOWED = 3
 BANNING_DURATION_SECONDS = 5  # 3 минуты
 
-class Game:
-    def __init__(self):
+class LuckyJetGame:
+    def __init__(self, money, user_id):
         self.lose = None
         self.last_win = None
         pygame.init()
@@ -33,6 +33,7 @@ class Game:
         pygame.display.set_caption("Sonic")
         self.clock = pygame.time.Clock()
         self.font = pygame.font.Font(None, 36)
+        self.running = True
 
         # Игровые параметры
         self.started = False
@@ -40,7 +41,10 @@ class Game:
         self.current_coefficient = 1.0
         self.base_coefficient_growth_rate = BASE_COEFFICIENT_GROWTH_RATE
         self.coefficient_growth_rate = self.base_coefficient_growth_rate
-        self.balance = 1000
+
+        self.balance = money
+        self.user_id = user_id
+
         self.bet_amount = 10
         self.winnings = 0
         self.potential_winnings = 0
@@ -60,7 +64,7 @@ class Game:
         try:
             # Загрузка изображений Соника (предполагается, что файлы называются sonic1.png, sonic2.png, ...)
             for i in range(1, 5):  # Загружаем 4 кадра анимации
-                image = pygame.image.load(f"sonic{i}.png").convert_alpha() # Замените sonic1.png и т.д. на ваши файлы
+                image = pygame.image.load(fr"lucky_jet\sonic{i}.png").convert_alpha() # Замените sonic1.png и т.д. на ваши файлы
                 self.sonick_images.append(image)
         except FileNotFoundError:
             print("Ошибка")
@@ -82,8 +86,14 @@ class Game:
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                self.running = False
+                sqlite_connection = sqlite3.connect('nebd52.db')
+                cursor = sqlite_connection.cursor()
+                print("Подключен к SQLite")
+                cursor.execute(f"""UPDATE ludiki SET money = {int(self.balance)}, sonic = 1 WHERE id = {self.user_id};""")
+                sqlite_connection.commit()
+                cursor.close()
                 pygame.quit()
-                sys.exit()
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = pygame.mouse.get_pos()
                 if not self.started:
@@ -246,7 +256,8 @@ class Game:
         self.screen.blit(self.sonick_images[self.sonick_index], self.sonick_rect)
 
     def run(self):
-        while True:
+        self.running = True
+        while self.running:
             self.handle_events()
             self.update()
 
@@ -306,6 +317,7 @@ class Game:
             self.clock.tick(FPS)
 
 
+
 if __name__ == "__main__":
-    game = Game()
+    game = LuckyJetGame()
     game.run()

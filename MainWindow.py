@@ -6,6 +6,9 @@ import pygame
 from coinflip import CoinFlipGame
 from double import DoubleGame
 from hilo import HiloGame
+from lucky_jet import LuckyJetGame
+from luckyloot import LuckyLootGame
+from tetris import TetrisGame
 
 pygame.init()
 
@@ -267,7 +270,7 @@ class MainWindow:
         self.screen.blit(self.chair_left_down_img, self.chair_left_down_rect)
         self.screen.blit(self.chair_right_img, self.chair_right_rect)
         self.screen.blit(self.chair_right_top_img, self.chair_right_top_rect)
-        if current_money < 100000:
+        if current_money < 10000:
             self.screen.blit(self.not_enough_money_img, self.not_enough_money_rect)
         else:
             self.end_game_button_rect = pygame.Rect(460, 620, 154, 95)
@@ -353,6 +356,46 @@ class MainWindow:
                                     current_money = i[3]
                             hilo = HiloGame(current_money, current_user)
 
+                        elif self.chair_left_rect.collidepoint(self.char_confirmation_rect[0],
+                                                               self.char_confirmation_rect[1]):
+                            sqlite_connection = sqlite3.connect('nebd52.db')
+                            cursor = sqlite_connection.cursor()
+                            print("Подключен к SQLite")
+                            result = cursor.execute("""SELECT id, login, password, money FROM ludiki""").fetchall()
+                            print(result)
+                            for i in result:
+                                if i[1] == current_username:
+                                    current_money = i[3]
+                            luckyloot = LuckyLootGame(current_money, current_user)
+
+                        elif self.chair_top_rect.collidepoint(self.char_confirmation_rect[0],
+                                                              self.char_confirmation_rect[1]):
+                            sqlite_connection = sqlite3.connect('nebd52.db')
+                            cursor = sqlite_connection.cursor()
+                            print("Подключен к SQLite")
+                            result = cursor.execute("""SELECT id, login, password, money FROM ludiki""").fetchall()
+                            print(result)
+                            for i in result:
+                                if i[1] == current_username:
+                                    current_money = i[3]
+                            lucky_jet = LuckyJetGame(current_money, current_user)
+                            lucky_jet.run()
+
+                        elif self.chair_right_top_rect.collidepoint(self.char_confirmation_rect[0],
+                                                                    self.char_confirmation_rect[1]):
+                            sqlite_connection = sqlite3.connect('nebd52.db')
+                            cursor = sqlite_connection.cursor()
+                            print("Подключен к SQLite")
+                            result = cursor.execute("""SELECT id, login, password, money FROM ludiki""").fetchall()
+                            print(result)
+                            for i in result:
+                                if i[1] == current_username:
+                                    current_money = i[3]
+                            tetris = TetrisGame(current_money, current_user)
+                            tetris.run()
+
+
+
                         elif self.end_game_button_rect.collidepoint(self.char_confirmation_rect[0],
                                                                     self.char_confirmation_rect[1]):
                             self.victory_flag = True
@@ -412,7 +455,6 @@ class MainWindow:
                             self.screen.blit(self.char_walk_right_1_img, self.char_rect)
                             pygame.display.flip()
                             pygame.time.wait(25)
-                            print(self.char_rect[0], self.char_rect[1])
                             self.draw_all()
                             self.screen.blit(self.char_walk_right_2_img, self.char_rect)
                             pygame.display.flip()
