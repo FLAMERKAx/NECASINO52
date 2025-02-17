@@ -212,10 +212,10 @@ class CoinFlipGame:
                                     self.screen.blit(text_surf, (self.input_rect.x + 10, self.input_rect.y + 10))
                                     self.screen.blit(self.inputbox_img, self.input_rect)
                                     self.screen.blit(
-                                        self.tailsbtn_img if self.selected_side != 'Tails' else self.tailsbtnsel_img,
+                                        self.tailsbtn_img if result != 'Tails' else self.tailsbtnsel_img,
                                         tails_btn)
                                     self.screen.blit(
-                                        self.headsbtn_img if self.selected_side != 'Heads' else self.headsbtnsel_img,
+                                        self.headsbtn_img if result != 'Heads' else self.headsbtnsel_img,
                                         heads_btn)
                                     for i, res in enumerate(self.history[-5:]):
                                         if res == "Heads":
